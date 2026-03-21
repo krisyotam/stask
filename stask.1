@@ -22,7 +22,7 @@ stask \- simple task manager with markdown documents
 .B stask
 .I list
 .B add
-.I text
+.I \(dqtext\(dq
 .br
 .B stask
 .I list
@@ -99,11 +99,13 @@ Show all tasks in
 displaying their done status, ID, title, and date.
 .SS Task Operations
 .TP
-.IB list " add " text
+.IB list " add " \(dqtext\(dq
 Add a new task to
 .I list
 with the given
 .IR text .
+The text must be quoted if it contains spaces (e.g.,
+.BR """On the Modern Professor""" ).
 Creates a markdown document with YAML frontmatter at
 .IR ~/.local/share/stask/docs/<list>/<id>.md .
 Prints the assigned task ID.

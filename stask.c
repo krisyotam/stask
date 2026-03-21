@@ -17,7 +17,7 @@ usage(void)
 		"       stask new <list>\n"
 		"       stask rm <list>\n"
 		"       stask <list>\n"
-		"       stask <list> add <text>\n"
+		"       stask <list> add \"<text>\"\n"
 		"       stask <list> done <id>\n"
 		"       stask <list> undo <id>\n"
 		"       stask <list> del <id>\n"
