@@ -39,6 +39,7 @@ typedef struct {
 typedef struct {
 	sqlite3 *db;
 	char dbpath[1024];
+	char docdir[1024];
 } TaskDB;
 
 /* data.c */
@@ -56,6 +57,25 @@ int task_done(TaskDB *tdb, int task_id);
 int task_undo(TaskDB *tdb, int task_id);
 int task_all(TaskDB *tdb, int list_id, Task **out, int *count);
 int task_count(TaskDB *tdb, int list_id, int *total, int *done);
+int task_get(TaskDB *tdb, int task_id, Task *out);
+int task_update_text(TaskDB *tdb, int task_id, const char *text);
+char *task_list_name(TaskDB *tdb, int list_id);
+
+/* doc.c */
+void doc_path(TaskDB *tdb, const char *listname, int task_id,
+	char *buf, int len);
+void doc_dir(TaskDB *tdb, const char *listname,
+	char *buf, int len);
+int doc_create(TaskDB *tdb, const char *listname,
+	int task_id, const char *title, const char *date);
+int doc_delete(TaskDB *tdb, const char *listname, int task_id);
+int doc_delete_all(TaskDB *tdb, const char *listname);
+int doc_edit(TaskDB *tdb, const char *listname, int task_id);
+int doc_show(TaskDB *tdb, const char *listname, int task_id);
+int doc_sync_title(TaskDB *tdb, const char *listname,
+	int task_id);
+void doc_sync_done(TaskDB *tdb, const char *listname,
+	int task_id, int done);
 
 /* gui.c */
 int gui_run(TaskDB *tdb, int argc, char *argv[]);

@@ -55,6 +55,8 @@ db_open(TaskDB *tdb)
 
 	snprintf(tdb->dbpath, sizeof(tdb->dbpath),
 		"%s/stask.db", dir);
+	snprintf(tdb->docdir, sizeof(tdb->docdir),
+		"%s", dir);
 
 	rc = sqlite3_open(tdb->dbpath, &tdb->db);
 	if (rc != SQLITE_OK) {
@@ -384,4 +386,80 @@ task_count(TaskDB *tdb, int list_id, int *total, int *done)
 	}
 	sqlite3_finalize(stmt);
 	return 0;
+}
+
+int
+task_get(TaskDB *tdb, int task_id, Task *out)
+{
+	sqlite3_stmt *stmt;
+	int rc;
+
+	rc = sqlite3_prepare_v2(tdb->db,
+		"SELECT id, list_id, text, done, added "
+		"FROM tasks WHERE id = ?;",
+		-1, &stmt, NULL);
+	if (rc != SQLITE_OK)
+		return -1;
+
+	sqlite3_bind_int(stmt, 1, task_id);
+	rc = sqlite3_step(stmt);
+	if (rc != SQLITE_ROW) {
+		sqlite3_finalize(stmt);
+		return -1;
+	}
+
+	out->id = sqlite3_column_int(stmt, 0);
+	out->list_id = sqlite3_column_int(stmt, 1);
+	snprintf(out->text, sizeof(out->text),
+		"%s", sqlite3_column_text(stmt, 2));
+	out->done = sqlite3_column_int(stmt, 3);
+	snprintf(out->added, sizeof(out->added),
+		"%s", sqlite3_column_text(stmt, 4));
+	sqlite3_finalize(stmt);
+	return 0;
+}
+
+int
+task_update_text(TaskDB *tdb, int task_id, const char *text)
+{
+	sqlite3_stmt *stmt;
+	int rc;
+
+	rc = sqlite3_prepare_v2(tdb->db,
+		"UPDATE tasks SET text = ? WHERE id = ?;",
+		-1, &stmt, NULL);
+	if (rc != SQLITE_OK)
+		return -1;
+
+	sqlite3_bind_text(stmt, 1, text, -1, SQLITE_STATIC);
+	sqlite3_bind_int(stmt, 2, task_id);
+	rc = sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+	return rc == SQLITE_DONE ? 0 : -1;
+}
+
+char *
+task_list_name(TaskDB *tdb, int list_id)
+{
+	sqlite3_stmt *stmt;
+	int rc;
+	static char name[128];
+
+	rc = sqlite3_prepare_v2(tdb->db,
+		"SELECT name FROM lists WHERE id = ?;",
+		-1, &stmt, NULL);
+	if (rc != SQLITE_OK)
+		return NULL;
+
+	sqlite3_bind_int(stmt, 1, list_id);
+	rc = sqlite3_step(stmt);
+	if (rc != SQLITE_ROW) {
+		sqlite3_finalize(stmt);
+		return NULL;
+	}
+
+	snprintf(name, sizeof(name),
+		"%s", sqlite3_column_text(stmt, 0));
+	sqlite3_finalize(stmt);
+	return name;
 }

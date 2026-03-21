@@ -20,7 +20,9 @@ usage(void)
 		"       stask <list> add <text>\n"
 		"       stask <list> done <id>\n"
 		"       stask <list> undo <id>\n"
-		"       stask <list> del <id>\n");
+		"       stask <list> del <id>\n"
+		"       stask <list> edit <id>\n"
+		"       stask <list> show <id>\n");
 	exit(1);
 }
 
@@ -101,6 +103,7 @@ cmd_new(TaskDB *tdb, const char *name)
 static void
 cmd_rm(TaskDB *tdb, const char *name)
 {
+	doc_delete_all(tdb, name);
 	if (list_delete(tdb, name) < 0)
 		fprintf(stderr,
 			"stask: cannot remove '%s'\n", name);
@@ -112,6 +115,8 @@ static void
 cmd_add(TaskDB *tdb, const char *listname, const char *text)
 {
 	List list;
+	Task *tasks;
+	int n, last_id;
 
 	if (list_by_name(tdb, listname, &list) < 0) {
 		fprintf(stderr,
@@ -119,34 +124,72 @@ cmd_add(TaskDB *tdb, const char *listname, const char *text)
 			listname);
 		return;
 	}
-	if (task_add(tdb, list.id, text) < 0)
+	if (task_add(tdb, list.id, text) < 0) {
 		fprintf(stderr, "stask: cannot add task\n");
-	else
+		return;
+	}
+
+	/* find the id of the task we just added */
+	if (task_all(tdb, list.id, &tasks, &n) < 0 || n == 0) {
 		printf("Added to '%s'\n", listname);
+		return;
+	}
+	last_id = tasks[n - 1].id;
+
+	/* check all tasks — the newest has the highest id */
+	{
+		int i;
+		for (i = 0; i < n; i++) {
+			if (tasks[i].id > last_id)
+				last_id = tasks[i].id;
+		}
+	}
+
+	doc_create(tdb, listname, last_id,
+		text, tasks[n - 1].added);
+	free(tasks);
+	printf("Added to '%s' (id: %d)\n", listname, last_id);
 }
 
 static void
-cmd_done(TaskDB *tdb, int id)
+cmd_done(TaskDB *tdb, const char *listname, int id)
 {
 	if (task_done(tdb, id) < 0)
 		fprintf(stderr,
 			"stask: cannot mark done: %d\n", id);
+	else
+		doc_sync_done(tdb, listname, id, 1);
 }
 
 static void
-cmd_undo(TaskDB *tdb, int id)
+cmd_undo(TaskDB *tdb, const char *listname, int id)
 {
 	if (task_undo(tdb, id) < 0)
 		fprintf(stderr,
 			"stask: cannot undo: %d\n", id);
+	else
+		doc_sync_done(tdb, listname, id, 0);
 }
 
 static void
-cmd_del(TaskDB *tdb, int id)
+cmd_del(TaskDB *tdb, const char *listname, int id)
 {
+	doc_delete(tdb, listname, id);
 	if (task_del(tdb, id) < 0)
 		fprintf(stderr,
 			"stask: cannot delete: %d\n", id);
+}
+
+static void
+cmd_edit(TaskDB *tdb, const char *listname, int id)
+{
+	doc_edit(tdb, listname, id);
+}
+
+static void
+cmd_show_doc(TaskDB *tdb, const char *listname, int id)
+{
+	doc_show(tdb, listname, id);
 }
 
 int
@@ -188,15 +231,23 @@ main(int argc, char *argv[])
 		} else if (strcmp(argv[2], "done") == 0) {
 			if (argc < 4) usage();
 			id = atoi(argv[3]);
-			cmd_done(&tdb, id);
+			cmd_done(&tdb, argv[1], id);
 		} else if (strcmp(argv[2], "undo") == 0) {
 			if (argc < 4) usage();
 			id = atoi(argv[3]);
-			cmd_undo(&tdb, id);
+			cmd_undo(&tdb, argv[1], id);
 		} else if (strcmp(argv[2], "del") == 0) {
 			if (argc < 4) usage();
 			id = atoi(argv[3]);
-			cmd_del(&tdb, id);
+			cmd_del(&tdb, argv[1], id);
+		} else if (strcmp(argv[2], "edit") == 0) {
+			if (argc < 4) usage();
+			id = atoi(argv[3]);
+			cmd_edit(&tdb, argv[1], id);
+		} else if (strcmp(argv[2], "show") == 0) {
+			if (argc < 4) usage();
+			id = atoi(argv[3]);
+			cmd_show_doc(&tdb, argv[1], id);
 		} else {
 			usage();
 		}

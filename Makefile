@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC = stask.c data.c gui.c
+SRC = stask.c data.c doc.c gui.c
 OBJ = ${SRC:.c=.o}
 
 all: stask
