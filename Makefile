@@ -26,8 +26,12 @@ install: stask
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	cp -f stask ${DESTDIR}${PREFIX}/bin
 	chmod 755 ${DESTDIR}${PREFIX}/bin/stask
+	mkdir -p ${DESTDIR}${MANPREFIX}/man1
+	cp -f stask.1 ${DESTDIR}${MANPREFIX}/man1
+	chmod 644 ${DESTDIR}${MANPREFIX}/man1/stask.1
 
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/stask
+	rm -f ${DESTDIR}${MANPREFIX}/man1/stask.1
 
 .PHONY: all clean install uninstall

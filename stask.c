@@ -200,6 +200,17 @@ main(int argc, char *argv[])
 
 	memset(&tdb, 0, sizeof(tdb));
 
+	if (argc >= 2 && (strcmp(argv[1], "-h") == 0
+		|| strcmp(argv[1], "--help") == 0)) {
+		usage();
+	}
+
+	if (argc >= 2 && (strcmp(argv[1], "-v") == 0
+		|| strcmp(argv[1], "--version") == 0)) {
+		printf("stask " VERSION "\n");
+		return 0;
+	}
+
 	/* gui mode */
 	if (argc >= 2 && strcmp(argv[1], "-g") == 0) {
 		if (db_open(&tdb) < 0)

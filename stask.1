@@ -1,0 +1,252 @@
+.TH STASK 1 "2026-03-21" "stask 0.2" "Simple Task Manager"
+.SH NAME
+stask \- simple task manager with markdown documents
+.SH SYNOPSIS
+.B stask
+.RB [ \-ghv ]
+.br
+.B stask
+.RB [ ls ]
+.br
+.B stask
+.B new
+.I list
+.br
+.B stask
+.B rm
+.I list
+.br
+.B stask
+.I list
+.br
+.B stask
+.I list
+.B add
+.I text
+.br
+.B stask
+.I list
+.B done
+.I id
+.br
+.B stask
+.I list
+.B undo
+.I id
+.br
+.B stask
+.I list
+.B del
+.I id
+.br
+.B stask
+.I list
+.B edit
+.I id
+.br
+.B stask
+.I list
+.B show
+.I id
+.SH DESCRIPTION
+.B stask
+is a suckless\-style task manager written in C. Tasks are organized into
+named lists and stored in a SQLite database. Each task has an associated
+markdown document with YAML frontmatter, allowing rich notes and planning
+alongside simple checklist tracking.
+.PP
+When a task is created, a markdown file is generated at
+.IR ~/.local/share/stask/docs/<list>/<id>.md .
+The frontmatter contains the task title, date, and done status.
+Editing the title in the frontmatter and saving will sync it back to the
+database.
+.SH OPTIONS
+.TP
+.B \-g
+Launch the GTK4 graphical interface. Features a list sidebar, task panel
+with checkboxes, and a light/dark theme toggle.
+.TP
+.B \-h, \-\-help
+Print usage information and exit.
+.TP
+.B \-v, \-\-version
+Print version and exit.
+.SH COMMANDS
+.SS List Management
+.TP
+.B ls
+List all task lists with task counts and creation dates. This is the
+default when no arguments are given.
+.TP
+.BI new " list"
+Create a new task list named
+.IR list .
+Names must be unique.
+.TP
+.BI rm " list"
+Remove a task list and all its tasks. Also deletes all associated
+markdown documents.
+.TP
+.I list
+Show all tasks in
+.IR list ,
+displaying their done status, ID, title, and date.
+.SS Task Operations
+.TP
+.IB list " add " text
+Add a new task to
+.I list
+with the given
+.IR text .
+Creates a markdown document with YAML frontmatter at
+.IR ~/.local/share/stask/docs/<list>/<id>.md .
+Prints the assigned task ID.
+.TP
+.IB list " done " id
+Mark task
+.I id
+as completed. Updates the
+.B done
+field in the markdown frontmatter to
+.BR true .
+.TP
+.IB list " undo " id
+Mark task
+.I id
+as not completed. Updates the
+.B done
+field in the markdown frontmatter to
+.BR false .
+.TP
+.IB list " del " id
+Permanently delete task
+.I id
+from the database and remove its markdown document.
+.TP
+.IB list " edit " id
+Open the markdown document for task
+.I id
+in an editor. Uses
+.B $EDITOR
+if set, otherwise falls back to
+.BR nvim (1),
+.BR vim (1),
+or
+.BR vi (1)
+in that order. When the editor exits, the title is synced from the
+frontmatter back to the database.
+.TP
+.IB list " show " id
+Print the markdown document for task
+.I id
+to standard output.
+.SH DOCUMENT FORMAT
+Each task document uses YAML frontmatter:
+.PP
+.RS
+.nf
+---
+title: "Read Gwern's selection effects piece"
+date: 2026-03-21
+done: false
+---
+
+Notes, links, and planning go here.
+.fi
+.RE
+.PP
+The
+.B title
+field is what appears in task listings. Edit it in the frontmatter and
+it will sync back to the database on
+.BR edit .
+The
+.B done
+field is kept in sync automatically by the
+.B done
+and
+.B undo
+commands.
+.SH FILES
+.TP
+.I ~/.local/share/stask/stask.db
+SQLite database containing all lists and tasks.
+.TP
+.I ~/.local/share/stask/docs/<list>/<id>.md
+Markdown documents for individual tasks, organized by list name.
+.SH ENVIRONMENT
+.TP
+.B EDITOR
+Preferred text editor for the
+.B edit
+command. If unset, stask tries nvim, vim, then vi.
+.SH EXAMPLES
+Create a list and add tasks:
+.PP
+.RS
+.nf
+$ stask new essays
+Created list 'essays'
+
+$ stask essays add "On the Modern Professor"
+Added to 'essays' (id: 1)
+
+$ stask essays add "Formal Verification in Practice"
+Added to 'essays' (id: 2)
+.fi
+.RE
+.PP
+View tasks in a list:
+.PP
+.RS
+.nf
+$ stask essays
+essays:
+  [ ] 1    On the Modern Professor                  2026-03-21
+  [ ] 2    Formal Verification in Practice           2026-03-21
+.fi
+.RE
+.PP
+Edit a task document (opens nvim/vim):
+.PP
+.RS
+.nf
+$ stask essays edit 1
+.fi
+.RE
+.PP
+Mark a task done:
+.PP
+.RS
+.nf
+$ stask essays done 1
+.fi
+.RE
+.PP
+View all lists:
+.PP
+.RS
+.nf
+$ stask ls
+LIST                      TASKS       DONE  CREATED
+essays                        2          1  2026-03-21
+.fi
+.RE
+.PP
+Launch GUI:
+.PP
+.RS
+.nf
+$ stask -g
+.fi
+.RE
+.SH BUGS
+Report bugs at https://github.com/krisyotam/stask/issues
+.SH AUTHOR
+Kris Yotam <krisyotam@protonmail.com>
+.SH LICENSE
+MIT License. See LICENSE file for details.
+.SH SEE ALSO
+.BR vim (1),
+.BR nvim (1),
+.BR sqlite3 (1)
