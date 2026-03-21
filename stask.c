@@ -223,8 +223,10 @@ main(int argc, char *argv[])
 	if (db_open(&tdb) < 0)
 		return 1;
 
-	if (argc < 2 || strcmp(argv[1], "ls") == 0) {
+	if (argc < 2 || (argc == 2 && strcmp(argv[1], "ls") == 0)) {
 		cmd_ls(&tdb);
+	} else if (argc == 3 && strcmp(argv[1], "ls") == 0) {
+		cmd_show(&tdb, argv[2]);
 	} else if (strcmp(argv[1], "new") == 0) {
 		if (argc < 3) usage();
 		cmd_new(&tdb, argv[2]);
