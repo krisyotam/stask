@@ -115,8 +115,14 @@ doc_edit(TaskDB *tdb, const char *listname, int task_id)
 	}
 
 	editor = getenv("EDITOR");
-	if (!editor)
-		editor = "vi";
+	if (!editor) {
+		if (access("/usr/bin/nvim", X_OK) == 0)
+			editor = "nvim";
+		else if (access("/usr/bin/vim", X_OK) == 0)
+			editor = "vim";
+		else
+			editor = "vi";
+	}
 
 	snprintf(cmd, sizeof(cmd), "%s '%s'", editor, path);
 	ret = system(cmd);
